@@ -7,7 +7,7 @@ const Home = () => {
   return (
     <div>
       <h1>HOME</h1>
-      <h1>Bem-vindo, {user ? user.name : 'Convidado'}</h1>
+      <h1>Bem-vindo, {user ? user.displayName : 'Convidado'}</h1>
       {isAdmin && <p>Você é um administrador.</p>}
       <button onClick={logout}>Logout</button>
     </div>

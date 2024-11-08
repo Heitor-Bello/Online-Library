@@ -14,23 +14,48 @@ export const AuthProvider = ({ children }) => {
         // Verificar se há um token no localStorage ao carregar o contexto
         const token = localStorage.getItem('token');
         if (token) {
-            try {
-                const decoded = jwtDecode(token);
-                setUser(decoded);
-                setIsAdmin(decoded.isAdmin);
-            } catch (error) {
-                console.error('Token inválido');
-            }
+            handleUserLogin(token);
+        } else {
+            setLoading(false);
         }
-        setLoading(false);
     }, []);
 
+     // Função para lidar com o login e buscar o usuário na coleção
+     const handleUserLogin = async (token) => {
+        try {
+            // Decodifica o token para obter o ID do usuário
+            const decoded = jwtDecode(token);
+            const userId = decoded.user_id;
+
+            // Busca o usuário na coleção de usuários usando o userId
+            const response = await fetch(`api/users/${userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`, // Inclui o token para autenticação
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Erro ao buscar dados do usuário");
+            }
+
+            const userData = await response.json();
+            console.log(userData)
+
+            // Atualiza o estado com os dados do usuário e a permissão de administrador
+            setUser(userData);
+            setIsAdmin(userData.isAdmin || false); // Define isAdmin conforme a coleção de usuários
+            localStorage.setItem('token', token); // Armazena o token no localStorage
+
+            setLoading(false);
+            navigate('/'); // Navegar para a página inicial após o login
+        } catch (error) {
+            console.error('Erro ao fazer login:', error);
+            setLoading(false);
+        }
+    };
+
     const login = (token) => {
-      localStorage.setItem('token', token);
-      const decoded = jwtDecode(token);
-      setUser(decoded);
-      setIsAdmin(decoded.isAdmin);
-      navigate('/'); // Navegar para a página home após o login
+        handleUserLogin(token);
     };
 
     const logout = () => {
