@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from "jwt-decode";
 
@@ -10,18 +10,8 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        // Verificar se há um token no localStorage ao carregar o contexto
-        const token = localStorage.getItem('token');
-        if (token) {
-            handleUserLogin(token);
-        } else {
-            setLoading(false);
-        }
-    }, []);
-
-     // Função para lidar com o login e buscar o usuário na coleção
-     const handleUserLogin = async (token) => {
+    // Função para lidar com o login e buscar o usuário na coleção
+    const handleUserLogin = useCallback(async (token) => {
         try {
             // Decodifica o token para obter o ID do usuário
             const decoded = jwtDecode(token);
@@ -39,7 +29,6 @@ export const AuthProvider = ({ children }) => {
             }
 
             const userData = await response.json();
-            console.log(userData)
 
             // Atualiza o estado com os dados do usuário e a permissão de administrador
             setUser(userData);
@@ -52,7 +41,17 @@ export const AuthProvider = ({ children }) => {
             console.error('Erro ao fazer login:', error);
             setLoading(false);
         }
-    };
+    }, [navigate]);
+
+    useEffect(() => {
+        // Verificar se há um token no localStorage ao carregar o contexto
+        const token = localStorage.getItem('token');
+        if (token) {
+            handleUserLogin(token);
+        } else {
+            setLoading(false);
+        }
+    }, [handleUserLogin]);     
 
     const login = (token) => {
         handleUserLogin(token);
@@ -62,7 +61,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('token');
         setUser(null);
         setIsAdmin(false);
-        navigate('/login');
+        navigate('/auth');
     };
 
     return (
